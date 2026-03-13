@@ -1,0 +1,1603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Independent Contractor Misclassification Risk Tool</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --navy: #1A2744; --teal: #0D9488; --teal-light: #CCFBF1;
+    --low: #16A34A; --low-bg: #DCFCE7; --low-border: #86EFAC;
+    --med: #D97706; --med-bg: #FEF3C7; --med-border: #FCD34D;
+    --high: #DC2626; --high-bg: #FEE2E2; --high-border: #FCA5A5;
+    --crit: #7C3AED; --crit-bg: #EDE9FE; --crit-border: #C4B5FD;
+    --gray-50: #F8FAFC; --gray-100: #F1F5F9; --gray-200: #E2E8F0;
+    --gray-400: #94A3B8; --gray-500: #64748B; --gray-700: #374151;
+    --gray-900: #111827; --white: #FFFFFF;
+    --warning-bg: #FFF7ED; --warning-border: #FDBA74; --warning-text: #9A3412;
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: var(--gray-50); color: var(--gray-900); font-size: 14px; line-height: 1.5; }
+  a { color: var(--teal); }
+
+  /* ── HEADER ── */
+  .site-header { background: var(--navy); color: white; padding: 24px 32px 20px; }
+  .site-header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
+  .site-header .subtitle { font-size: 13px; color: #A5B4FC; margin-top: 4px; }
+  .entity-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(13,148,136,0.25); border: 1px solid rgba(13,148,136,0.5); border-radius: 20px; padding: 4px 12px; font-size: 12px; color: #99F6E4; margin-top: 10px; }
+
+  /* ── DISCLAIMER ── */
+  .disclaimer { background: var(--warning-bg); border-bottom: 2px solid var(--warning-border); padding: 10px 32px; }
+  .disclaimer summary { cursor: pointer; font-size: 12px; font-weight: 600; color: var(--warning-text); list-style: none; display: flex; align-items: center; gap: 6px; }
+  .disclaimer summary::before { content: '⚠️'; }
+  .disclaimer summary::after { content: ' ▸ click to expand'; font-weight: 400; }
+  .disclaimer[open] summary::after { content: ' ▸ click to collapse'; }
+  .disclaimer p { font-size: 12px; color: var(--warning-text); padding: 8px 0 4px; line-height: 1.6; }
+
+  /* ── TABS ── */
+  .tab-nav { background: white; border-bottom: 2px solid var(--gray-200); padding: 0 32px; display: flex; gap: 0; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .tab-btn { padding: 14px 22px; font-size: 13px; font-weight: 600; color: var(--gray-500); background: none; border: none; border-bottom: 3px solid transparent; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+  .tab-btn:hover { color: var(--navy); }
+  .tab-btn.active { color: var(--navy); border-bottom-color: var(--teal); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── LAYOUT ── */
+  .container { max-width: 1200px; margin: 0 auto; padding: 28px 32px; }
+
+  /* ── RISK BADGES ── */
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; letter-spacing: 0.3px; text-transform: uppercase; }
+  .badge-low  { background: var(--low-bg); color: var(--low); border: 1px solid var(--low-border); }
+  .badge-med  { background: var(--med-bg); color: var(--med); border: 1px solid var(--med-border); }
+  .badge-high { background: var(--high-bg); color: var(--high); border: 1px solid var(--high-border); }
+  .badge-crit { background: var(--crit-bg); color: var(--crit); border: 1px solid var(--crit-border); }
+
+  /* ── SCREENER ── */
+  .screener-wrap { max-width: 760px; margin: 0 auto; }
+  .screener-intro { background: white; border: 1px solid var(--gray-200); border-radius: 10px; padding: 20px 24px; margin-bottom: 24px; }
+  .screener-intro h2 { font-size: 17px; color: var(--navy); margin-bottom: 6px; }
+  .screener-intro p { font-size: 13px; color: var(--gray-500); }
+  .np-banner { background: #EFF6FF; border: 1px solid #BFDBFE; border-left: 4px solid #3B82F6; border-radius: 6px; padding: 12px 16px; margin-bottom: 20px; font-size: 13px; color: #1E40AF; }
+  .np-banner strong { display: block; margin-bottom: 3px; }
+  .progress-bar { background: var(--gray-200); border-radius: 4px; height: 6px; margin-bottom: 24px; overflow: hidden; }
+  .progress-fill { background: var(--teal); height: 100%; border-radius: 4px; transition: width 0.3s; }
+  .progress-label { font-size: 12px; color: var(--gray-500); margin-bottom: 8px; }
+  .question-card { background: white; border: 1px solid var(--gray-200); border-radius: 10px; padding: 24px; margin-bottom: 0; }
+  .question-card h3 { font-size: 15px; color: var(--navy); margin-bottom: 16px; line-height: 1.4; }
+  .question-card .q-note { font-size: 12px; color: var(--gray-500); margin-top: -10px; margin-bottom: 14px; }
+  .options-list { display: flex; flex-direction: column; gap: 8px; }
+  .option-btn { text-align: left; padding: 12px 16px; border: 2px solid var(--gray-200); border-radius: 8px; background: white; cursor: pointer; font-size: 13px; color: var(--gray-700); transition: all 0.12s; display: flex; justify-content: space-between; align-items: center; }
+  .option-btn:hover { border-color: var(--teal); color: var(--navy); background: var(--teal-light); }
+  .option-btn.selected { border-color: var(--teal); background: var(--teal-light); color: var(--navy); font-weight: 600; }
+  .option-pts { font-size: 11px; color: var(--gray-400); font-weight: 400; }
+  .option-btn.selected .option-pts { color: var(--teal); font-weight: 600; }
+  .screener-nav { display: flex; justify-content: space-between; margin-top: 20px; align-items: center; }
+  .btn { padding: 10px 22px; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; }
+  .btn-primary { background: var(--teal); color: white; }
+  .btn-primary:hover { background: #0B7A72; }
+  .btn-primary:disabled { background: var(--gray-200); color: var(--gray-400); cursor: not-allowed; }
+  .btn-secondary { background: white; color: var(--gray-700); border: 1px solid var(--gray-200); }
+  .btn-secondary:hover { background: var(--gray-100); }
+
+  /* ── RESULTS ── */
+  .results-card { background: white; border: 1px solid var(--gray-200); border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
+  .results-header { padding: 24px; display: flex; align-items: center; gap: 20px; }
+  .risk-circle { width: 80px; height: 80px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; }
+  .risk-circle .risk-icon { font-size: 26px; }
+  .risk-circle .risk-score { font-size: 11px; margin-top: 2px; }
+  .risk-circle.low  { background: var(--low-bg); color: var(--low); border: 3px solid var(--low-border); }
+  .risk-circle.med  { background: var(--med-bg); color: var(--med); border: 3px solid var(--med-border); }
+  .risk-circle.high { background: var(--high-bg); color: var(--high); border: 3px solid var(--high-border); }
+  .risk-circle.crit { background: var(--crit-bg); color: var(--crit); border: 3px solid var(--crit-border); }
+  .results-header-text h2 { font-size: 20px; color: var(--navy); margin-bottom: 4px; }
+  .results-header-text p { font-size: 13px; color: var(--gray-500); }
+  .results-body { padding: 0 24px 24px; }
+  .results-section { margin-top: 20px; }
+  .results-section h4 { font-size: 13px; font-weight: 700; color: var(--navy); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--gray-200); }
+  .flag-list, .mitigation-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+  .flag-item { font-size: 13px; color: var(--gray-700); padding: 8px 12px; border-radius: 6px; display: flex; gap: 10px; align-items: flex-start; }
+  .flag-item.red   { background: var(--high-bg); }
+  .flag-item.amber { background: var(--med-bg); }
+  .flag-item.blue  { background: #EFF6FF; }
+  .flag-item.purple{ background: var(--crit-bg); }
+  .flag-icon { font-size: 15px; flex-shrink: 0; margin-top: 1px; }
+  .mit-item { font-size: 13px; color: var(--gray-700); padding: 8px 12px; border-radius: 6px; background: var(--low-bg); display: flex; gap: 10px; align-items: flex-start; }
+  .mit-icon { flex-shrink: 0; }
+  .restart-btn { margin-top: 20px; }
+
+  /* ── COUNTRY GUIDE ── */
+  .filter-bar { background: white; border: 1px solid var(--gray-200); border-radius: 10px; padding: 16px 20px; margin-bottom: 24px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .filter-bar label { font-size: 12px; font-weight: 600; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.4px; }
+  .filter-group { display: flex; gap: 6px; flex-wrap: wrap; }
+  .filter-chip { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; border: 1px solid var(--gray-200); background: white; color: var(--gray-700); cursor: pointer; transition: all 0.12s; }
+  .filter-chip:hover { border-color: var(--teal); color: var(--teal); }
+  .filter-chip.active { background: var(--navy); color: white; border-color: var(--navy); }
+  .search-box { margin-left: auto; }
+  .search-box input { border: 1px solid var(--gray-200); border-radius: 6px; padding: 7px 12px; font-size: 13px; color: var(--gray-700); width: 200px; outline: none; }
+  .search-box input:focus { border-color: var(--teal); }
+  .cards-grid { display: flex; flex-direction: column; gap: 14px; }
+  .country-card { background: white; border: 1px solid var(--gray-200); border-radius: 10px; overflow: hidden; transition: box-shadow 0.15s; }
+  .country-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+  .card-header { padding: 16px 20px; cursor: pointer; display: flex; align-items: center; gap: 14px; user-select: none; }
+  .card-header:hover { background: var(--gray-50); }
+  .country-flag { font-size: 28px; flex-shrink: 0; }
+  .card-header-text { flex: 1; }
+  .card-header-text h3 { font-size: 15px; font-weight: 700; color: var(--navy); }
+  .card-header-text .card-sub { font-size: 12px; color: var(--gray-500); margin-top: 2px; }
+  .card-badges { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-top: 5px; }
+  .badge-region { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; background: var(--gray-100); color: var(--gray-500); border: 1px solid var(--gray-200); }
+  .badge-extra { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; background: #FFF7ED; color: #9A3412; border: 1px solid #FED7AA; }
+  .card-toggle { font-size: 18px; color: var(--gray-400); transition: transform 0.2s; flex-shrink: 0; }
+  .card-toggle.open { transform: rotate(90deg); }
+  .card-body { display: none; border-top: 1px solid var(--gray-200); padding: 20px; }
+  .card-body.open { display: block; }
+  .card-section { margin-bottom: 18px; }
+  .card-section:last-child { margin-bottom: 0; }
+  .card-section h4 { font-size: 12px; font-weight: 700; color: var(--navy); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .card-item { font-size: 13px; color: var(--gray-700); background: var(--gray-50); border-radius: 6px; padding: 8px 12px; }
+  .card-item strong { display: block; font-size: 11px; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 2px; }
+  .card-list { list-style: none; display: flex; flex-direction: column; gap: 5px; }
+  .card-list li { font-size: 13px; color: var(--gray-700); padding-left: 18px; position: relative; line-height: 1.4; }
+  .card-list li::before { content: '•'; position: absolute; left: 4px; color: var(--teal); font-weight: 700; }
+  .card-list.red li::before { color: var(--high); }
+  .card-list.green li::before { color: var(--low); }
+  .card-list.purple li::before { color: var(--crit); }
+  .card-list.amber li::before { color: var(--med); }
+  .np-note { background: #EFF6FF; border: 1px solid #BFDBFE; border-left: 3px solid #3B82F6; border-radius: 6px; padding: 10px 14px; margin-top: 10px; }
+  .np-note strong { font-size: 11px; text-transform: uppercase; letter-spacing: 0.3px; color: #1E40AF; display: block; margin-bottom: 3px; }
+  .np-note p { font-size: 12px; color: #1E3A8A; line-height: 1.5; }
+  .pe-note { background: var(--crit-bg); border: 1px solid var(--crit-border); border-left: 3px solid var(--crit); border-radius: 6px; padding: 10px 14px; margin-top: 10px; }
+  .pe-note strong { font-size: 11px; text-transform: uppercase; letter-spacing: 0.3px; color: var(--crit); display: block; margin-bottom: 3px; }
+  .pe-note p { font-size: 12px; color: #4C1D95; line-height: 1.5; }
+  .card-left-border { border-left: 4px solid transparent; }
+  .card-left-border.low  { border-left-color: var(--low); }
+  .card-left-border.med  { border-left-color: var(--med); }
+  .card-left-border.high { border-left-color: var(--high); }
+  .card-left-border.crit { border-left-color: var(--crit); }
+  .no-results { text-align: center; padding: 48px 20px; color: var(--gray-400); font-size: 14px; }
+
+  /* ── FACTOR MATRIX ── */
+  .matrix-intro { background: white; border: 1px solid var(--gray-200); border-radius: 10px; padding: 18px 22px; margin-bottom: 20px; }
+  .matrix-intro p { font-size: 13px; color: var(--gray-500); line-height: 1.6; }
+  .matrix-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid var(--gray-200); }
+  table.matrix { border-collapse: collapse; width: 100%; font-size: 12px; background: white; }
+  table.matrix th { background: var(--navy); color: white; padding: 10px 8px; font-size: 11px; font-weight: 600; text-align: center; border: 1px solid #2D3E6B; white-space: nowrap; }
+  table.matrix th:first-child { text-align: left; padding-left: 14px; min-width: 170px; }
+  table.matrix td { padding: 8px 8px; border: 1px solid var(--gray-200); text-align: center; vertical-align: middle; }
+  table.matrix td:first-child { text-align: left; padding-left: 14px; font-weight: 600; color: var(--navy); background: var(--gray-50); white-space: nowrap; }
+  table.matrix tr:hover td { background: var(--teal-light) !important; }
+  table.matrix tr:hover td:first-child { background: #B2F5EA !important; }
+  .mc-low  { background: var(--low-bg); color: var(--low); font-weight: 600; font-size: 11px; }
+  .mc-med  { background: var(--med-bg); color: var(--med); font-weight: 600; font-size: 11px; }
+  .mc-high { background: var(--high-bg); color: var(--high); font-weight: 600; font-size: 11px; }
+  .mc-crit { background: var(--crit-bg); color: var(--crit); font-weight: 600; font-size: 11px; }
+  .mc-na   { background: var(--gray-100); color: var(--gray-400); font-size: 11px; }
+  .matrix-legend { display: flex; gap: 16px; flex-wrap: wrap; padding: 14px 18px; background: white; border-top: 1px solid var(--gray-200); font-size: 12px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-dot { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+
+  /* ── FOOTER ── */
+  footer { background: var(--navy); color: #A5B4FC; text-align: center; padding: 16px 32px; font-size: 12px; margin-top: 40px; }
+
+  /* ── PRINT ── */
+  @media print {
+    .tab-nav, .filter-bar, .screener-wrap, .btn, footer { display: none !important; }
+    .tab-panel { display: block !important; }
+    .card-body { display: block !important; }
+    .country-card { break-inside: avoid; margin-bottom: 12px; }
+  }
+  @media (max-width: 700px) {
+    .container { padding: 16px; }
+    .site-header { padding: 16px; }
+    .card-grid { grid-template-columns: 1fr; }
+    .tab-btn { padding: 12px 12px; font-size: 12px; }
+    .filter-bar { flex-direction: column; align-items: flex-start; }
+    .search-box { margin-left: 0; }
+    .search-box input { width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="site-header">
+  <h1>⚖️ Independent Contractor Misclassification Risk Tool</h1>
+  <div class="subtitle">Employment classification risk assessment for international contractor engagements</div>
+  <div class="entity-badge">🏛 US-Based Non-Profit · Single Legal Entity (US only) · Research / Education Sector</div>
+</header>
+
+<!-- DISCLAIMER -->
+<details class="disclaimer">
+  <summary>Legal Disclaimer</summary>
+  <p>This tool provides general legal information for educational and risk-awareness purposes only. It does not constitute legal advice and does not create an attorney-client relationship. Employment classification law is highly fact-specific and jurisdiction-dependent. Laws change frequently — verify current rules with qualified local counsel before making classification decisions. This tool reflects law as of early 2026. Your organization should consult a licensed employment attorney in each relevant jurisdiction before engaging, continuing, or reclassifying any contractor relationship.</p>
+</details>
+
+<!-- TAB NAV -->
+<nav class="tab-nav">
+  <button class="tab-btn active" onclick="switchTab('screener', this)">🔍 Risk Screener</button>
+  <button class="tab-btn" onclick="switchTab('guide', this)">🌍 Country Guide</button>
+  <button class="tab-btn" onclick="switchTab('matrix', this)">📊 Factor Matrix</button>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- TAB 1: RISK SCREENER -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div id="tab-screener" class="tab-panel active">
+<div class="container">
+<div class="screener-wrap">
+
+  <div class="screener-intro">
+    <h2>Arrangement Risk Screener</h2>
+    <p>Answer 9 questions about the contractor engagement to receive a risk assessment, country-specific flags, and recommended actions. Takes about 2 minutes.</p>
+  </div>
+
+  <div class="np-banner">
+    <strong>⚠️ Important: Your org has a US-only legal entity.</strong>
+    For any international contractor: if they are reclassified as an employee, you have no legal mechanism to employ them without establishing a local entity or using an Employer of Record (EOR). This adds a layer of risk beyond the standard misclassification penalty in every non-US country.
+  </div>
+
+  <div class="progress-label" id="progress-label">Question 1 of 9</div>
+  <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:11%"></div></div>
+
+  <div id="screener-questions"></div>
+  <div id="screener-results" style="display:none"></div>
+
+</div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- TAB 2: COUNTRY GUIDE -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div id="tab-guide" class="tab-panel">
+<div class="container">
+
+  <div class="filter-bar">
+    <div>
+      <div style="margin-bottom:6px"><label>Region</label></div>
+      <div class="filter-group" id="region-filters">
+        <button class="filter-chip active" onclick="filterRegion('all',this)">All</button>
+        <button class="filter-chip" onclick="filterRegion('americas',this)">🌎 Americas</button>
+        <button class="filter-chip" onclick="filterRegion('apac',this)">🌏 Asia-Pacific</button>
+        <button class="filter-chip" onclick="filterRegion('europe',this)">🌍 Europe</button>
+        <button class="filter-chip" onclick="filterRegion('africa',this)">🌍 Africa</button>
+      </div>
+    </div>
+    <div>
+      <div style="margin-bottom:6px"><label>Risk Level</label></div>
+      <div class="filter-group" id="risk-filters">
+        <button class="filter-chip active" onclick="filterRisk('all',this)">All</button>
+        <button class="filter-chip" onclick="filterRisk('med',this)">🟡 Medium</button>
+        <button class="filter-chip" onclick="filterRisk('high',this)">🔴 High</button>
+        <button class="filter-chip" onclick="filterRisk('crit',this)">🟣 Critical</button>
+      </div>
+    </div>
+    <div class="search-box">
+      <input type="text" id="country-search" placeholder="🔍 Search countries..." oninput="filterSearch(this.value)">
+    </div>
+  </div>
+
+  <div class="cards-grid" id="cards-grid"></div>
+  <div class="no-results" id="no-results" style="display:none">No countries match the current filters.</div>
+
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- TAB 3: FACTOR MATRIX -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div id="tab-matrix" class="tab-panel">
+<div class="container">
+
+  <div class="matrix-intro">
+    <p><strong>Factor Matrix</strong> — A quick-scan comparison of how each country weights key misclassification factors. Use this to identify where your greatest exposure concentrates and which countries share similar risk profiles. Ratings reflect the typical full-time, long-term contractor arrangement for a US-based non-profit with no local entity. <em>Scroll right to see all columns.</em></p>
+  </div>
+
+  <div class="matrix-wrap">
+    <table class="matrix" id="matrix-table"></table>
+    <div class="matrix-legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#DCFCE7;border:1px solid #86EFAC"></div>Low</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#FEF3C7;border:1px solid #FCD34D"></div>Medium</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#FEE2E2;border:1px solid #FCA5A5"></div>High</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#EDE9FE;border:1px solid #C4B5FD"></div>Critical</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#F1F5F9;border:1px solid #CBD5E1"></div>N/A</div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<footer>
+  Independent Contractor Misclassification Risk Tool · For US-based non-profit employers · Updated March 2026 · Not legal advice — consult qualified counsel in each jurisdiction
+</footer>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════════════════════
+
+const COUNTRIES = [
+  {
+    id:'us', name:'United States', flag:'🇺🇸', region:'americas', risk:'high', riskMod:0,
+    extra: 'State Variations Critical',
+    legalTest:'IRS 3-Category Test + DOL Economic Reality Test (2024 Final Rule)',
+    testBasis:'IRS Rev. Rul. 87-41; DOL FLSA 2024 Final Rule (eff. Mar 11, 2024); state law varies',
+    presumption:'No formal presumption federally; CA/MA use ABC test with strong presumption of employment',
+    factors:[
+      'Behavioral control: does employer control HOW work is done (method, tools, training)?',
+      'Financial control: method of payment, investment in equipment, opportunity for profit/loss',
+      'Type of relationship: written contracts, employee benefits, permanency, integral to business',
+      'DOL 2024: economic dependence on the hiring entity — most important single factor',
+      'California AB5 ABC test: (A) free from control, (B) outside usual course of business, (C) independently established trade',
+      'Permanency/duration: longer ongoing relationships weigh heavily toward employment',
+    ],
+    npNotes:[
+      'IRS audits non-profits more frequently on worker classification; 501(c) status provides no protection',
+      'IRC §530 safe harbor (reasonable basis defense) available but requires consistent treatment and industry practice — narrow',
+      'Section 3509 reduced rates apply if unintentional misclassification — still substantial liability',
+      'Research collaborators / visiting academics may qualify for distinctions but must be documented',
+      'Board members and volunteers have separate classification rules — be precise',
+    ],
+    penalties:[
+      '100% of back payroll taxes (employer + employee share) + interest',
+      'Failure-to-withhold penalties: up to 25% of unpaid tax',
+      'State penalties stack on top: CA adds up to $25,000 per violation (Labor Code §226.8)',
+      'Benefits liability: retroactive eligibility for health, retirement, PTO',
+      'Personal liability for "responsible persons" under IRC §6672 (trust fund recovery)',
+    ],
+    mitigation:[
+      'Ensure contractor has multiple bona fide clients (document annually)',
+      'Engagement letter with output/deliverable focus — no behavioral control language',
+      'Contractor uses own equipment and tools; no company email/badge',
+      'No integration into company org chart, Slack hierarchy, or management chain',
+      'Consider Section 530 safe harbor documentation if relying on industry practice',
+      'For CA-based contractors: apply AB5 rigorously or engage via C2C (corp-to-corp)',
+      'Annual re-review of all contractor arrangements — risk escalates with duration',
+    ],
+    similar:['Canada'],
+    peRisk:'N/A (domestic)',
+    criminal:'Possible for willful tax evasion; DOL criminal referrals for egregious cases',
+    enforcement:'Very High — IRS, DOL, state agencies all enforce independently',
+    eorRec:'Not required domestically; strongly consider for CA-based arrangements',
+    matrix:{ presumption:'med', duration:'high', exclusivity:'high', control:'high', integration:'high', equipment:'med', substitution:'med', peRisk:'na', criminal:'med', enforcement:'high', eorNeeded:'consider' }
+  },
+  {
+    id:'mx', name:'Mexico', flag:'🇲🇽', region:'americas', risk:'crit', riskMod:4,
+    extra: '2021 Reform — EOR Required',
+    legalTest:'LFT Art. 20–21 Presumption of Employment + 2021 Subcontracting Reform (REPSE)',
+    testBasis:'Ley Federal del Trabajo Art. 20–21; Reforma al Outsourcing (Apr 2021); REPSE registry',
+    presumption:'YES — any personal service relationship is presumed employment; burden on employer to disprove',
+    factors:[
+      'Any personal service + payment = presumed employment (LFT Art. 21)',
+      '2021 reform: subcontracting/outsourcing of personnel is PROHIBITED',
+      'Only "specialized services" permitted, and only through REPSE-registered providers',
+      'REPSE: Registry of Specialized Service Providers — mandatory registration with STPS',
+      'Regularity and continuity of services — occasional work is safer, ongoing is not',
+      'Subordination: any degree of direction or instruction by client = employment indicator',
+    ],
+    npNotes:[
+      'Foreign entity cannot legally be a direct employer in Mexico without a Mexican legal entity',
+      'If reclassified: you have NO mechanism to regularize without Mexican entity or REPSE-registered EOR',
+      'IMSS (social security) and INFONAVIT (housing fund) contributions become due immediately on reclassification',
+      'SAT (tax authority) pursues foreign companies increasingly — PE risk is real',
+      'Non-profit status in US provides zero protection under Mexican law',
+      'Academic/research MOUs do not substitute for proper labor classification',
+    ],
+    penalties:[
+      'IMSS back contributions + surcharges up to 100%',
+      'INFONAVIT contributions retroactively',
+      'SAT income tax liability + penalties',
+      'Full retroactive benefits: Aguinaldo (15 days/year), vacation + 25% premium, profit sharing (PTU)',
+      'Severance: 3 months salary + 20 days/year seniority',
+      'Criminal exposure for directors: social security fraud, tax evasion',
+    ],
+    mitigation:[
+      'USE AN EOR (Employer of Record) — this is the only safe structure for ongoing work',
+      'For truly occasional engagements (<10% time, project-based): written consulting agreement citing foreign law',
+      'Never use a Mexican individual contractor for ongoing, regular work',
+      'If using REPSE-registered provider: verify registration status before each invoice',
+      'Document contractor\'s independent business: other clients, own RFC (tax ID), separate invoicing',
+      'Avoid any supervisory language in contracts or communications',
+    ],
+    similar:['Colombia', 'Argentina'],
+    peRisk:'High — ongoing contractor presence likely creates Mexican PE; SAT may assess corporate tax',
+    criminal:'Yes — tax evasion (SAT) and social security fraud (IMSS) carry criminal liability for company officers',
+    enforcement:'Very High — 2021 reform created aggressive new enforcement regime',
+    eorRec:'REQUIRED for any ongoing work',
+    matrix:{ presumption:'crit', duration:'crit', exclusivity:'crit', control:'crit', integration:'crit', equipment:'high', substitution:'high', peRisk:'high', criminal:'crit', enforcement:'crit', eorNeeded:'required' }
+  },
+  {
+    id:'br', name:'Brazil', flag:'🇧🇷', region:'americas', risk:'crit', riskMod:4,
+    extra: 'Highest Labor Litigation Globally',
+    legalTest:'CLT Art. 3 — Four Elements Test (Pejotização scrutiny)',
+    testBasis:'Consolidação das Leis do Trabalho (CLT) Art. 3; Lei 13.467/2017 (labor reform); court precedent',
+    presumption:'YES — extremely strong; courts routinely pierce PJ (corporate) veil; burden firmly on employer',
+    factors:[
+      'Habitualidade: non-eventuality — regular, repeated, ongoing work (not one-off projects)',
+      'Subordinação: subordination — any direction over method, schedule, or location',
+      'Onerosidade: payment in exchange for work',
+      'Pessoalidade: personal service — contractor cannot freely substitute',
+      'Pejotização: individual opens company (PJ/CNPJ) to invoice — courts pierce veil if other CLT elements present',
+      'Tele-subordination: recognized even for remote work — digital oversight = subordination',
+      'Economic dependence: contractor earns majority of income from your org = strong employment indicator',
+    ],
+    npNotes:[
+      'Brazil has the highest volume of labor court cases in the world — litigation is near-certain if relationship ends',
+      'Foreign employer with no Brazilian entity = cannot defend in Brazilian labor court effectively',
+      'FGTS (Fundo de Garantia): 8% of salary must be deposited monthly; reclassification triggers 8% + 40% penalty',
+      'Even non-profit / research entities face full CLT liability — no exemptions',
+      'Currency risk: retroactive liability calculated in BRL but exposure is substantial',
+      'Federal government contractors (if grant-funded work touches Brazilian public entities) have heightened scrutiny',
+    ],
+    penalties:[
+      'FGTS retroactive deposits: 8% monthly + 40% fine on total balance',
+      '13th salary (Décimo Terceiro): one extra month pay per year, retroactively',
+      'Vacation: 30 days/year + 1/3 vacation premium, retroactively',
+      'Notice period: 30 days + 3 days per year of service',
+      'Overtime at 1.5× to 2× rate for all hours over 44/week',
+      'INSS (social security): 20% employer contribution retroactively',
+      'Moral damages: additional compensation frequently awarded by labor courts',
+    ],
+    mitigation:[
+      'USE AN EOR — no safe alternative for ongoing work; this is non-negotiable in Brazil',
+      'If using PJ contractor: they must have other major clients, own infrastructure, genuine business operations',
+      'Never direct PJ contractor\'s schedule, location, or method of work',
+      'Limit engagement duration; project-based with defined deliverables only',
+      'Avoid onboarding PJ contractors into internal systems, org charts, or management chains',
+      'Consider fixed-price project contracts (not time-and-materials) to reduce subordination indicators',
+      'Local Brazilian counsel review of any contractor agreement before signing',
+    ],
+    similar:['Mexico', 'Argentina', 'Colombia'],
+    peRisk:'Very High — ongoing contractor presence almost certainly creates Brazilian PE; RFB (tax authority) actively pursues',
+    criminal:'Yes — FGTS evasion is criminal; labor court judges can refer cases for criminal prosecution',
+    enforcement:'Critical — Brazil has specialized labor courts (Tribunais do Trabalho) in every state; enforcement is swift and pro-worker',
+    eorRec:'REQUIRED — no exceptions for ongoing work',
+    matrix:{ presumption:'crit', duration:'crit', exclusivity:'crit', control:'crit', integration:'crit', equipment:'high', substitution:'crit', peRisk:'crit', criminal:'crit', enforcement:'crit', eorNeeded:'required' }
+  },
+  {
+    id:'sg', name:'Singapore', flag:'🇸🇬', region:'apac', risk:'med', riskMod:1,
+    extra: null,
+    legalTest:'Employment Act — Contract of Service vs. Contract for Services',
+    testBasis:'Employment Act (Cap. 91A); Advisory Guidelines on Personal Scope (2021); Tripartite Guidelines',
+    presumption:'No formal presumption; substance-over-form approach; more contractor-friendly than most jurisdictions',
+    factors:[
+      'Control test: does hiring party control how, where, and when work is done?',
+      'Integration: is contractor integrated into the business organization?',
+      'Economic reality: does contractor bear genuine financial risk?',
+      'Equipment and tools: who provides primary work tools?',
+      'Exclusivity: does contractor work for multiple clients?',
+      'Right to substitute: can contractor send someone else to do the work?',
+      'Personal scope advisory: applies to those performing personal service work under direction',
+    ],
+    npNotes:[
+      'CPF (Central Provident Fund): required for employees but NOT for foreign nationals or genuine contractors',
+      'Withholding tax: 15–22% on payments to non-resident contractors — proper compliance required',
+      'MOM (Ministry of Manpower) work pass requirements if contractor is a foreign national',
+      'Singapore is generally more contractor-friendly but MOM scrutiny is increasing for full-time arrangements',
+      'Non-profit / charity status does not exempt from Employment Act obligations',
+      'Tech sector has well-established contractor norms — but exclusivity is a key risk factor',
+    ],
+    penalties:[
+      'CPF arrears + interest (17.5% employer + 20% employee contributions on salary)',
+      'Employment Act benefits: annual leave, sick leave, overtime pay, retrenchment benefits',
+      'MOM investigation and possible prosecution for willful non-compliance',
+      'Fines up to SGD 10,000 for Employment Act violations',
+    ],
+    mitigation:[
+      'Well-drafted IC agreement emphasizing independence, deliverables, and no control',
+      'Ensure contractor has documented multiple clients',
+      'Avoid any CPF enrollment — strong evidence of employment relationship',
+      'Foreign national contractors: verify work pass authorization before engagement',
+      'Use fixed-price project contracts where possible',
+      'Engagement duration under 12 months reduces risk; review annually',
+    ],
+    similar:['Hong Kong'],
+    peRisk:'Medium — IRAS (tax authority) may assess PE if contractor is conducting business activities on behalf of foreign entity',
+    criminal:'Possible for willful CPF evasion; general criminal law fraud',
+    enforcement:'Medium — MOM and IRAS are sophisticated but Singapore is more pragmatic than most Asian jurisdictions',
+    eorRec:'Recommended for full-time arrangements; consider for any engagement >12 months',
+    matrix:{ presumption:'low', duration:'med', exclusivity:'med', control:'med', integration:'med', equipment:'low', substitution:'low', peRisk:'med', criminal:'low', enforcement:'med', eorNeeded:'consider' }
+  },
+  {
+    id:'et', name:'Ethiopia', flag:'🇪🇹', region:'africa', risk:'high', riskMod:2,
+    extra: 'NGO Sector Scrutiny Increasing',
+    legalTest:'Labour Proclamation No. 1156/2019 — Presumption of Employment',
+    testBasis:'Labour Proclamation No. 1156/2019 (Art. 4); Employment Proclamation; Ministry of Labour enforcement',
+    presumption:'YES — Art. 4 presumes employment in any work relationship; burden on employer to prove genuine contractor status',
+    factors:[
+      'Continuity: regular, ongoing work relationships presumed employment',
+      'Subordination: any degree of direction or supervision by the hiring party',
+      'Payment: receipt of remuneration for work',
+      'Personal service: work performed personally (not through a business)',
+      'Integration: worker integrated into operations of the organization',
+      'Work permit intersection: foreign nationals working without proper authorization compounds risk',
+    ],
+    npNotes:[
+      'International NGOs and non-profits are specifically scrutinized by Ethiopian Ministry of Labour',
+      'CSO (Civil Society Organization) regulations overlap with labor law — separate compliance track required',
+      'Ethiopian Charities and Societies Agency (ChSA) registration affects how foreign non-profits can operate',
+      'Local "consultant" arrangements are extremely common in NGO sector — but regularity triggers employment presumption',
+      'Work permit requirements: foreign nationals need work permits; employer sponsorship required = creates employer-employee evidence',
+      'US non-profit operating in Ethiopia without an entity creates both labor and tax compliance exposure',
+    ],
+    penalties:[
+      'Back wages and retroactive social security contributions (pension)',
+      'Administrative fines from Ministry of Labour',
+      'Immigration penalties for unauthorized work arrangements',
+      'Reputational risk: NGO registration can be suspended for labor violations',
+      'Difficulty in future project approvals if violations recorded',
+    ],
+    mitigation:[
+      'Local Ethiopian legal counsel essential before any engagement',
+      'Project-based agreements with clear deliverables and defined end dates',
+      'Ensure contractor has other clients — document this',
+      'Avoid regular, scheduled work arrangements that mimic employment',
+      'Consider local EOR/PEO provider for ongoing work',
+      'Verify work permit status of foreign-national contractors',
+      'Consult with ChSA on permissible structures for international NGO operations',
+    ],
+    similar:['Kenya', 'Nigeria'],
+    peRisk:'High — ongoing contractor presence likely creates Ethiopian PE; tax authority may assess corporate income tax',
+    criminal:'Administrative penalties; potential criminal exposure in severe cases under Ethiopian criminal law',
+    enforcement:'Medium but growing — enforcement has historically been uneven but increasing scrutiny of foreign entities',
+    eorRec:'Strongly recommended for ongoing work; local legal counsel required',
+    matrix:{ presumption:'high', duration:'high', exclusivity:'med', control:'high', integration:'high', equipment:'med', substitution:'med', peRisk:'high', criminal:'med', enforcement:'med', eorNeeded:'recommend' }
+  },
+  {
+    id:'au', name:'Australia', flag:'🇦🇺', region:'apac', risk:'high', riskMod:3,
+    extra: '2022 HCA Ruling — Contract Terms Now Decisive',
+    legalTest:'Fair Work Act + High Court "Totality of the Contract" Test (post-2022)',
+    testBasis:'CFMMEU v Personnel Contracting [2022] HCA 1; ZG Operations v Jamsek [2022] HCA 2; Fair Work Act 2009 ss.357-359',
+    presumption:'No formal presumption; BUT post-2022 court will look strictly at contractual terms (not subsequent conduct)',
+    factors:[
+      'MAJOR 2022 SHIFT: Classification now based on written contract terms, not how the relationship actually operated',
+      'Right to control (in contract): does the contract give the hiring party the right to direct method/manner of work?',
+      'Does the contractor work IN the business (employee) or FOR the business (contractor)?',
+      'Substitution: does contract genuinely allow the contractor to send a substitute?',
+      'Equipment and uniform: who provides tools, uniform, or branding?',
+      'Integration: is the contractor presented to third parties as part of the engaging entity?',
+      'Superannuation: applies to contractors who work primarily for one entity under contract for services',
+      'Sham contracting (ss.357-359): criminal offense to misrepresent employment as contracting',
+    ],
+    npNotes:[
+      'Post-2022: review ALL contractor contracts — prior conduct can no longer save a poorly drafted agreement',
+      'Superannuation Guarantee: 11.5% (2024) applies even to some genuine contractors if they work mainly for one entity',
+      'Workers compensation: contractors may be deemed workers for state workers comp purposes — separate test',
+      'Fair Work Act "employee-like" provisions (2024): expanding protections for gig/platform workers',
+      'Non-profit employers are not exempt from Fair Work Act or sham contracting provisions',
+      'Australian Taxation Office (ATO) PAYG withholding: may be required for contractor payments depending on arrangement',
+    ],
+    penalties:[
+      'Sham contracting: up to $93,900 per individual / $469,500 per body corporate per contravention',
+      'Superannuation Guarantee Charge: unpaid super + 10% interest + administration fee',
+      'Fair Work penalties: $18,780 per individual / $93,900 per body corporate per breach',
+      'Workers compensation liability if contractor classified as worker under state law',
+      'ATO PAYG withholding obligations + penalties for non-withholding',
+    ],
+    mitigation:[
+      'Conduct post-2022 contract audit — rewrite any contract with control language or that could imply employment',
+      'Include genuine substitution clause (and ensure it can actually be exercised)',
+      'Remove any uniform, equipment-provision, or integration clauses',
+      'Avoid exclusivity requirements — allow contractor to work for competitors',
+      'Superannuation: calculate whether super guarantee applies and pay proactively',
+      'Legal review by Australian employment law specialist before signing',
+      'For ongoing full-time arrangements: seriously consider EOR or direct employment',
+    ],
+    similar:['New Zealand'],
+    peRisk:'Medium-High — ATO may assess PE; GST registration may be required',
+    criminal:'Yes — sham contracting is a criminal offense under Fair Work Act; personal liability for officers',
+    enforcement:'Very High — Fair Work Ombudsman is proactive; sham contracting unit specifically investigates',
+    eorRec:'Strongly recommended for full-time arrangements; legal review mandatory for any Australian contractor',
+    matrix:{ presumption:'med', duration:'high', exclusivity:'high', control:'crit', integration:'high', equipment:'high', substitution:'crit', peRisk:'med', criminal:'crit', enforcement:'high', eorNeeded:'recommend' }
+  },
+  {
+    id:'in', name:'India', flag:'🇮🇳', region:'apac', risk:'high', riskMod:2,
+    extra: '"Principal Employer" Liability',
+    legalTest:'Contract Labour Act 1970 + EPF Act + ESI Act — Principal Employer Liability',
+    testBasis:'Contract Labour (R&A) Act 1970; EPF & MP Act 1952; ESI Act 1948; Industrial Disputes Act 1947',
+    presumption:'No formal presumption, but "principal employer" liability means risk attaches regardless of direct relationship',
+    factors:[
+      'Principal employer liability: if a contractor fails to pay PF/ESI, the principal employer (your org) is directly liable',
+      'Supervision and control: degree of supervision by hiring entity',
+      'Integration: use of hiring entity\'s premises, equipment, and management structure',
+      'Duration: regular, continuous work relationships are treated differently from project work',
+      'Economic dependence: is this the contractor\'s primary source of income?',
+      'TDS (Tax Deducted at Source): Section 194C (contractor) or 194J (professional fees) obligations',
+    ],
+    npNotes:[
+      'TDS mandatory: 1-2% (194C) or 10% (194J) on all contractor payments; failure = penalty + interest',
+      'Form 15CA/15CB required for payments to non-residents — significant compliance burden',
+      'FCRA (Foreign Contribution Regulation Act): if funded by foreign donations, additional restrictions on expenditure',
+      'Principal employer liability means your US org can be held liable for Indian PF/ESI even for contractors',
+      'State-level rules vary significantly: Karnataka, Maharashtra have additional requirements',
+      'Work permit (Employment Visa) for foreign nationals: your org must be sponsor = creates employer evidence',
+    ],
+    penalties:[
+      'EPF arrears + damages up to 25% + interest at 12% per annum',
+      'ESI contributions + penalties',
+      'TDS liability: 100% of tax + interest + penalty of 100-300% for willful failure',
+      'Industrial Disputes Act: reinstatement order + back wages if contractor deemed employee and "terminated"',
+      'Criminal prosecution for willful EPF/ESI evasion',
+    ],
+    mitigation:[
+      'Engage contractors through a registered Indian staffing/outsourcing firm where possible',
+      'Comply with TDS obligations proactively — engage Indian CA for withholding calculations',
+      'Avoid providing contractors with company equipment, office space, or email addresses',
+      'Ensure contractors have their own GST registration and issue proper invoices',
+      'Document multiple client relationships of contractor',
+      'Short-term, project-based agreements preferred; avoid open-ended engagements',
+      'FCRA compliance review if using foreign-funded grants to pay Indian contractors',
+    ],
+    similar:['Philippines', 'Bangladesh'],
+    peRisk:'High — Indian tax authorities very active on PE claims for foreign entities with regular local activities',
+    criminal:'Yes — EPF/ESI evasion; TDS default; FCRA violations all carry criminal penalties',
+    enforcement:'High — EPFO and ESIC have inspection powers; IT department pursues TDS defaults aggressively',
+    eorRec:'Strongly recommended; especially for technical/research roles. Mandatory for any ongoing full-time arrangement',
+    matrix:{ presumption:'med', duration:'high', exclusivity:'med', control:'high', integration:'high', equipment:'med', substitution:'med', peRisk:'high', criminal:'high', enforcement:'high', eorNeeded:'recommend' }
+  },
+  {
+    id:'gb', name:'United Kingdom', flag:'🇬🇧', region:'europe', risk:'high', riskMod:3,
+    extra: 'IR35 Off-Payroll Working Rules',
+    legalTest:'IR35 / Off-Payroll Working Rules (Chapter 10, ITEPA 2003)',
+    testBasis:'Income Tax (Earnings and Pensions) Act 2003, Ch. 10; HMRC Employment Status Manual; Finance Act 2021',
+    presumption:'No formal presumption, but IR35 applies broadly and HMRC presumes "inside IR35" in contested cases',
+    factors:[
+      'Mutuality of obligation: obligation to offer AND accept work = strong employment indicator',
+      'Control: does client control how, where, and when work is done?',
+      'Personal service: is the contractor required to perform the work personally?',
+      'Substitution: can the contractor genuinely substitute another worker?',
+      '"Part and parcel" of the organization: integration into management structure, org chart, intranet',
+      'Financial risk: does contractor bear genuine financial risk (own business risk)?',
+      'Status Determination Statement (SDS): medium/large clients must issue SDS; incorrect SDS = client liability',
+    ],
+    npNotes:[
+      'IR35 applies to medium and large organizations — most non-profits will qualify',
+      'As the client/engager, your org must issue a Status Determination Statement (SDS) for each contractor',
+      'If you incorrectly determine a contractor is "outside IR35", HMRC can assess you for PAYE + NICs',
+      'HMRC CEST (Check Employment Status for Tax) tool — use it; document the results',
+      'Umbrella companies: common IR35 workaround but carries its own compliance complexity',
+      'UK worker status (Employment Rights Act): separate from IR35 — "worker" status between employee and self-employed has additional rights',
+    ],
+    penalties:[
+      'PAYE income tax + Employee and Employer NICs (National Insurance) retroactively',
+      'Penalties up to 100% of tax owed for deliberate failure',
+      'Interest on unpaid amounts',
+      'HMRC investigation costs and time burden',
+      'Potential director disqualification in severe cases',
+    ],
+    mitigation:[
+      'Complete HMRC CEST assessment for every contractor engagement; document results',
+      'Issue Status Determination Statement (SDS) with written reasons',
+      'Ensure contract has a genuine substitution clause (and test it)',
+      'Avoid "part and parcel" indicators: company email, business cards, org chart inclusion',
+      'Fixed-price project contracts preferred over day-rate arrangements',
+      'Review IR35 status at contract renewal — changes in working practices can change status',
+      'Consider engaging contractors through VAT-registered limited companies with multiple clients',
+    ],
+    similar:['Ireland'],
+    peRisk:'Medium-High — HMRC may assess UK PE if contractor conducts business activities on behalf of foreign entity',
+    criminal:'HMRC criminal prosecution for deliberate tax evasion; directors at risk',
+    enforcement:'Very High — HMRC has dedicated IR35 investigation teams; non-compliance campaigns ongoing',
+    eorRec:'Recommended for full-time arrangements; IR35 compliance review mandatory',
+    matrix:{ presumption:'med', duration:'high', exclusivity:'high', control:'high', integration:'high', equipment:'med', substitution:'high', peRisk:'med', criminal:'med', enforcement:'high', eorNeeded:'recommend' }
+  },
+  {
+    id:'ca', name:'Canada', flag:'🇨🇦', region:'americas', risk:'high', riskMod:1,
+    extra: 'Quebec More Restrictive',
+    legalTest:'Wiebe Door / Connor Homes Test (Federal) + Quebec Code du Travail',
+    testBasis:'Wiebe Door Services v MNR [1986] FCJ 1235; 1392644 Ontario Inc. v MNR (Connor Homes) [2013]; Quebec Code du travail',
+    presumption:'No formal federal presumption; Quebec has stronger worker-protective presumptions under Code du travail',
+    factors:[
+      'Control (most important): who controls how, when, and where work is done?',
+      'Ownership of tools: who provides the primary tools and equipment?',
+      'Chance of profit / risk of loss: does contractor have genuine entrepreneurial risk?',
+      'Integration: is the contractor\'s work integral to the hiring entity\'s business?',
+      'Connor Homes refinement: first determine mutual intention from contract, then test against 4 Wiebe Door factors',
+      'Quebec: Code du travail applies broader "worker" definition; civil law approach more protective',
+    ],
+    npNotes:[
+      'CRA (Canada Revenue Agency) audits non-profits and charities on T4 vs. T4A classification',
+      'CPP (Canada Pension Plan) and EI (Employment Insurance) premiums due for employees; T4A for contractors',
+      'Quebec requires separate Quebec Pension Plan (QPP) and QPIP contributions',
+      'Each province has its own Employment Standards Act — vary significantly',
+      'Research/academic arrangements: visiting researchers may have specific rules under university protocols',
+    ],
+    penalties:[
+      'CPP + EI premiums (employer + employee share) + interest retroactively',
+      'Income tax withholding liability',
+      'Provincial employment standards: vacation pay, notice, severance retroactively',
+      'CRA penalties for failure to remit: 10-20% of unremitted amounts',
+    ],
+    mitigation:[
+      'Connor Homes: ensure written contract clearly expresses intent of independent contractor relationship',
+      'Document contractor\'s independent business: other clients, own corporation, GST/HST registration',
+      'Contractor should invoice (not receive payroll) and have own business expenses',
+      'Avoid control over method, schedule, or location',
+      'Quebec: apply higher standard — consult Quebec employment law specialist',
+      'Annual CRA self-assessment review',
+    ],
+    similar:['United States'],
+    peRisk:'Medium — CRA may assess PE if ongoing business activities conducted in Canada',
+    criminal:'Possible for willful tax evasion; generally less criminal exposure than some jurisdictions',
+    enforcement:'High — CRA actively audits; provincial labor boards also enforce',
+    eorRec:'Recommended for Quebec arrangements; consider for full-time national arrangements',
+    matrix:{ presumption:'med', duration:'high', exclusivity:'med', control:'high', integration:'med', equipment:'med', substitution:'med', peRisk:'med', criminal:'low', enforcement:'high', eorNeeded:'consider' }
+  },
+  {
+    id:'de', name:'Germany', flag:'🇩🇪', region:'europe', risk:'crit', riskMod:4,
+    extra: 'Criminal Liability Risk',
+    legalTest:'§7 SGB IV — Scheinselbstständigkeit (Bogus Self-Employment)',
+    testBasis:'§7 SGB IV; §611a BGB (employment contract, 2017); §266a StGB (criminal); Deutsche Rentenversicherung status process',
+    presumption:'YES — §611a BGB (since 2017): presumption of employment if contractor is personally dependent and integrated',
+    factors:[
+      'No own employees: contractor has no employees of their own (strong employment indicator)',
+      'Single major client: >5/6 of contractor\'s revenue from one client = Scheinselbstständigkeit presumption',
+      'Same activity as employees: performing identical work to permanent employees',
+      'Client direction: subject to instructions on time, place, or manner of work',
+      'No market presence: contractor does not independently market services to third parties',
+      'Single criterion: if working for only one client AND no own employees, automatic presumption applies',
+    ],
+    npNotes:[
+      'Deutsche Rentenversicherung (DRV) can audit status independently of tax authorities — binding determination',
+      'Even after reclassification, social security contributions owed for up to 4 years (30 years if deliberate)',
+      'Criminal liability: §266a StGB — withholding social security contributions = up to 5 years prison (10 years aggravated)',
+      'Both the company AND individual officers (HR, CEO) personally face criminal liability',
+      'German Works Council (Betriebsrat) if present: must be informed of contractor arrangements',
+      'Research: academic/visiting researcher arrangements have some specific rules but no broad exemption',
+    ],
+    penalties:[
+      'Social security back contributions: ~42% of gross pay (employer + employee share)',
+      'Wage tax (Lohnsteuer) retroactively',
+      'Interest and late payment surcharges',
+      'DRV Beitragsbescheid (assessment notice): binding and immediately enforceable',
+      'Criminal prosecution: §266a StGB — up to 5 years imprisonment for officers',
+      'Unlimited look-back period for deliberate violations',
+    ],
+    mitigation:[
+      'USE AN EOR — only safe structure for ongoing work in Germany',
+      'If attempting genuine contractor: contractor must have multiple major clients (none >5/6 of revenue)',
+      'Contractor must have own employees or genuine market presence',
+      'Obtain DRV Statusfeststellungsverfahren (status determination) proactively — binding if correctly done',
+      'Written agreement must strictly avoid direction/control language',
+      'No integration into work schedules, time tracking, or org communications',
+      'German employment law specialist review before engagement',
+    ],
+    similar:['Austria', 'Switzerland'],
+    peRisk:'Very High — German tax authorities (Finanzamt) actively pursue PE claims; ongoing contractor activity creates strong PE risk',
+    criminal:'YES — §266a StGB criminal liability for officers; serious and actively prosecuted',
+    enforcement:'Critical — DRV audits are systematic; Hauptzollamt (customs) also enforces; highly sophisticated enforcement',
+    eorRec:'REQUIRED for any ongoing work — no exceptions',
+    matrix:{ presumption:'crit', duration:'crit', exclusivity:'crit', control:'crit', integration:'crit', equipment:'high', substitution:'high', peRisk:'crit', criminal:'crit', enforcement:'crit', eorNeeded:'required' }
+  },
+  {
+    id:'fr', name:'France', flag:'🇫🇷', region:'europe', risk:'crit', riskMod:4,
+    extra: 'Travail Dissimulé — Criminal Risk',
+    legalTest:'Code du Travail Art. L1221-1 — Lien de Subordination Test',
+    testBasis:'Code du travail Art. L1221-1, L8221-6; Cour de Cassation gig economy rulings (2020–2024); portage salarial law',
+    presumption:'YES — strong; Cour de Cassation: any personal service under direction = employment; Uber, Deliveroo reclassified 2020-2024',
+    factors:[
+      'Lien de subordination juridique: legal subordination link — any instruction on how/when/where to work',
+      '"Insertion dans un service organisé": integration into an organized service structure',
+      'Personal service: work must be performed by the contractor personally',
+      'Remuneration: payment in exchange for work',
+      'Economic dependence: contractor depends on client for income',
+      'Travail dissimulé: concealed employment — criminal offense if employment relationship hidden behind contractor form',
+    ],
+    npNotes:[
+      'URSSAF (social security collection) actively investigates foreign companies with French contractors',
+      'Travail dissimulé: criminal charge = up to 3 years prison + €45,000 fine for the person responsible',
+      'Double back-pay: contractor reclassified as employee entitled to DOUBLE back pay under travail dissimulé',
+      'French courts apply EU law: even if contract governed by US law, French employment law applies',
+      'Portage salarial: legal EOR-style umbrella company structure — the ONLY compliant alternative to direct EOR',
+      'Non-profit status provides no exemption — URSSAF treats all organizations equally',
+    ],
+    penalties:[
+      'URSSAF: full social security contributions retroactively (45%+ of gross pay)',
+      '5% surcharge + 10% late payment interest per year',
+      'Double back-pay under travail dissimulé provisions',
+      'Criminal prosecution: up to 3 years prison + €45,000 fine for company officers',
+      'Immigration penalties if contractor was also working without proper authorization',
+    ],
+    mitigation:[
+      'USE EOR or Portage Salarial — individual contractors are not safe for ongoing work',
+      'Portage salarial: contractor works through accredited umbrella company (société de portage) — legally compliant',
+      'If truly independent: contractor must be a registered auto-entrepreneur/SARL with multiple clients',
+      'Absolutely no direction on method, schedule, or workplace',
+      'French employment lawyer review mandatory',
+      'URSSAF self-assessment or advance ruling (rescrit) possible for borderline cases',
+    ],
+    similar:['Belgium', 'Luxembourg'],
+    peRisk:'Very High — French tax authorities (DGFIP) actively assert PE; French courts apply French law extraterritorially',
+    criminal:'YES — travail dissimulé carries criminal liability; actively prosecuted by Inspection du Travail',
+    enforcement:'Critical — Inspection du Travail + URSSAF joint enforcement; very sophisticated and proactive',
+    eorRec:'REQUIRED — portage salarial or EOR only; no individual contractor arrangements are safe',
+    matrix:{ presumption:'crit', duration:'crit', exclusivity:'crit', control:'crit', integration:'crit', equipment:'high', substitution:'crit', peRisk:'crit', criminal:'crit', enforcement:'crit', eorNeeded:'required' }
+  },
+  {
+    id:'nl', name:'Netherlands', flag:'🇳🇱', region:'europe', risk:'high', riskMod:3,
+    extra: 'DBA Enforcement Resumed Jan 2025',
+    legalTest:'Wet DBA (2016) — Work Relationship Assessment (enforcement fully resumed Jan 2025)',
+    testBasis:'Wet DBA (2016); Belastingdienst (tax authority) enforcement; WTTA (pending); Dutch Supreme Court Deliveroo 2023',
+    presumption:'No formal presumption; however Dutch courts interpret employment broadly; Supreme Court: Deliveroo workers = employees (2023)',
+    factors:[
+      'Instructions: does the hiring party give instructions on how/when/where to work?',
+      'Integration: is the work integrated into the organization\'s normal operations?',
+      'Personal labor: is work performed personally by the contractor?',
+      'ZZP status: true ZZP (zzelfstandige zonder personeel) must have genuine entrepreneurial characteristics',
+      'Tariff threshold: hourly rate <€32/hr signals potential bogus self-employment',
+      'Profit margin <25%: indicates economic dependence rather than genuine entrepreneurship',
+      'Exclusivity/single client: contractors working mainly for one client face heightened scrutiny',
+    ],
+    npNotes:[
+      'Enforcement suspended 2016–2024; FULLY RESUMED January 1, 2025 — existing arrangements must be reviewed NOW',
+      'Belastingdienst (Dutch tax authority) can issue retroactive assessments back to 2016 for deliberate violations',
+      'Wet WTTA (new contractor law) pending — will add registration requirements for staffing agencies',
+      'Dutch works council requirements if present: contractors may count toward thresholds',
+      'Non-profit status: no exemption from labor classification rules',
+      'Model agreements (modelovereenkomsten): FNV-approved template contracts offer some protection if strictly followed',
+    ],
+    penalties:[
+      'Payroll tax (loonheffingen) + employer social security contributions retroactively',
+      'NLA (Netherlands Labour Authority) fines: up to €87,000 per violation',
+      'Belastingdienst penalties for tax evasion',
+      'Criminal prosecution in deliberate/repeated cases',
+      'Retroactive look-back to 2016 for intentional violations',
+    ],
+    mitigation:[
+      'IMMEDIATE: review all Dutch contractor arrangements under 2025 enforcement rules',
+      'ZZP contractor must have: multiple clients, own business expenses, entrepreneurial risk, market presence',
+      'Hourly rate should be >€32/hr; profit margin should be >25%',
+      'Use Belastingdienst approved model agreement and follow it strictly',
+      'For ongoing full-time work: transition to EOR or direct employment immediately',
+      'Dutch employment lawyer review mandatory given 2025 enforcement change',
+    ],
+    similar:['Belgium'],
+    peRisk:'High — Dutch tax authority pursues PE aggressively; financial hub with sophisticated enforcement',
+    criminal:'Possible for deliberate/repeated violations',
+    enforcement:'High — resumed 2025 after suspension; Belastingdienst + NLA joint enforcement expected to be vigorous',
+    eorRec:'REQUIRED for ongoing work — especially in post-2025 enforcement environment',
+    matrix:{ presumption:'med', duration:'high', exclusivity:'high', control:'high', integration:'high', equipment:'med', substitution:'high', peRisk:'high', criminal:'med', enforcement:'crit', eorNeeded:'required' }
+  },
+  {
+    id:'ar', name:'Argentina', flag:'🇦🇷', region:'americas', risk:'crit', riskMod:4,
+    extra: 'Double Indemnification Risk',
+    legalTest:'LCT Art. 23 — Presumption from Personal Service Rendering',
+    testBasis:'Ley de Contrato de Trabajo (LCT) 20.744 Art. 23–24; Ley 24.013 Art. 8 (double indemnification); "contrato realidad" doctrine',
+    presumption:'YES — strongest presumption globally; Art. 23: any personal service = presumed employment; Art. 24: any payment = presumed employment',
+    factors:[
+      '"Contrato realidad": substance completely overrides form — no contract language can override actual working conditions',
+      'Personal rendering of services: any personal work = presumed employment',
+      'Regularity: any pattern of recurring work',
+      'Economic integration: contractor integrated into business operations',
+      'Direction: any direction or instructions from client',
+      'Double indemnification: Art. 8 Ley 24.013 doubles severance if employment was fraudulently disguised',
+    ],
+    npNotes:[
+      'Argentina has one of the world\'s most worker-protective legal regimes — no exceptions for foreign non-profits',
+      'AFIP (tax authority) and Ministry of Labour both enforce aggressively',
+      'Economic instability: retroactive liability calculated in pesos but effectively indexed — exposure is substantial',
+      'PE risk: AFIP actively pursues foreign companies; significant corporate tax exposure',
+      'Argentina\'s labor courts are entirely pro-worker; reversal of judgment nearly impossible',
+      'Even occasional payments can trigger employment presumption under Art. 24',
+    ],
+    penalties:[
+      'Full LCT benefits retroactively: 13th salary, vacation + 33% premium, seniority bonus',
+      'Double severance (Art. 245 + Ley 24.013 Art. 8) = potentially 2× base for every year',
+      'ANSES: social security contributions + surcharges',
+      'Obras sociales (health): retroactive health contributions',
+      'Union dues (gremiales): potentially applicable',
+      'Criminal exposure for willful evasion',
+    ],
+    mitigation:[
+      'AVOID ANY ONGOING CONTRACTOR ARRANGEMENTS IN ARGENTINA — no safe structure exists',
+      'EOR is the only viable approach for ongoing work',
+      'For truly one-off consulting: single project, single deliverable, single payment — document exhaustively',
+      'Ensure contractor has documented independent business with other clients',
+      'Never make recurring payments on a schedule',
+      'Argentine employment lawyer must review any arrangement before engagement',
+    ],
+    similar:['Brazil', 'Mexico'],
+    peRisk:'Very High — AFIP pursues PE claims aggressively; Argentina has extensive tax treaty network but also high enforcement',
+    criminal:'Yes — criminal tax evasion; officers personally liable',
+    enforcement:'Critical — Ministry of Labour + AFIP combined enforcement; labor courts 100% pro-worker',
+    eorRec:'REQUIRED — no alternatives for ongoing work; single-payment project consulting only with legal review',
+    matrix:{ presumption:'crit', duration:'crit', exclusivity:'crit', control:'crit', integration:'crit', equipment:'crit', substitution:'crit', peRisk:'crit', criminal:'high', enforcement:'crit', eorNeeded:'required' }
+  },
+  {
+    id:'co', name:'Colombia', flag:'🇨🇴', region:'americas', risk:'high', riskMod:3,
+    extra: 'Contrato Realidad Doctrine',
+    legalTest:'CST Art. 23–24 — Presumption of Employment + Contrato Realidad',
+    testBasis:'Código Sustantivo del Trabajo Art. 23–24; "contrato realidad" jurisprudence; DIAN (tax) enforcement',
+    presumption:'YES — Art. 24 CST: personal service + remuneration = presumed employment; rebuttable but burdensome',
+    factors:[
+      'Personal service: work performed personally by the individual',
+      'Subordination: any subordination or dependence (legal criterion Art. 23)',
+      'Remuneration: receipt of payment for work',
+      '"Contrato realidad": substance over form — court looks at how relationship actually functioned',
+      'Continuity and integration: regular, ongoing work integrated into business',
+      'Economic dependence: contractor relies primarily on one client for income',
+    ],
+    npNotes:[
+      'Colombia has become a popular location for US tech companies — and enforcement has increased accordingly',
+      'DIAN (Colombian tax authority) increasingly pursuing PE claims from foreign entities',
+      'Non-profit status: Colombian Cámara de Comercio may require local registration for ongoing activities',
+      'Social security: EPS (health), Pensiones, ARL (work risk), parafiscales (SENA, ICBF, CCF) all become due',
+      'Labor courts are accessible and cheap — very high litigation risk from terminated contractors',
+    ],
+    penalties:[
+      'Full social security retroactively: EPS + Pensiones + ARL + parafiscales (~45-52% of salary)',
+      'Prima de servicios: 15 days pay per semester',
+      'Cesantías (severance fund): 30 days pay per year',
+      'Vacaciones: 15 days per year',
+      'Reintegro (reinstatement) possible in some circumstances',
+    ],
+    mitigation:[
+      'EOR strongly recommended for ongoing work',
+      'If using independent contractor: must be a registered empresa (company) with multiple clients',
+      'Engagement letter with specific deliverables; avoid any supervisory language',
+      'Fixed-price project contracts; avoid time-based arrangements',
+      'Local Colombian labor attorney review',
+      'Document all evidence of contractor\'s independence',
+    ],
+    similar:['Mexico', 'Argentina'],
+    peRisk:'High — DIAN actively pursues PE; growing enforcement against foreign tech/research companies',
+    criminal:'Possible for tax evasion; labor violations primarily civil but director liability exists',
+    enforcement:'High — labor courts are accessible; DIAN increasing technical capacity',
+    eorRec:'Strongly recommended for any ongoing arrangement',
+    matrix:{ presumption:'high', duration:'high', exclusivity:'high', control:'high', integration:'high', equipment:'med', substitution:'high', peRisk:'high', criminal:'med', enforcement:'high', eorNeeded:'recommend' }
+  },
+  {
+    id:'ph', name:'Philippines', flag:'🇵🇭', region:'apac', risk:'high', riskMod:2,
+    extra: 'DOLE DO 174 — Labor-Only Contracting Prohibited',
+    legalTest:'Four-Fold Test + Labor Code Art. 295 + DOLE DO 174 (2017)',
+    testBasis:'Labor Code of the Philippines Art. 295; DOLE Dept. Order 174 (2017); Control Test jurisprudence',
+    presumption:'YES — after 1 year, worker performing integral work is presumed regular employee; "security of tenure" constitutional right',
+    factors:[
+      'Control test (most important): does hiring entity control how, when, and where work is done?',
+      'Selection and engagement: did hiring entity select and hire the contractor?',
+      'Payment of wages: is hiring entity the economic source of compensation?',
+      'Power of dismissal: can hiring entity end the relationship?',
+      'DOLE DO 174: prohibits labor-only contracting — contractor must have substantial capital/equipment AND control over workers',
+      'Duration: work lasting >1 year and integral to business = presumed regular employment',
+    ],
+    npNotes:[
+      'Philippine labor system is highly litigated — National Labor Relations Commission (NLRC) handles cases efficiently',
+      'Security of tenure: once regular employee status attaches, termination requires just cause + due process',
+      'DOLE registration: independent contractors should ideally have DOLE registration/accreditation',
+      'SSS, PhilHealth, Pag-IBIG: mandatory contributions for employees',
+      'BIR (tax): withholding tax on contractor payments; proper documentation essential',
+      'Non-profit status: Philippine SEC registration for foreign non-profit activities may be required',
+    ],
+    penalties:[
+      'Regularization order: forced conversion to regular employee status',
+      'Back wages from date of illegal dismissal if relationship terminated',
+      'SSS + PhilHealth + Pag-IBIG retroactively',
+      'DOLE administrative fines for labor-only contracting',
+      'Criminal referral for repeated violations',
+    ],
+    mitigation:[
+      'EOR/PEO is well-established in Philippines — strongly recommended',
+      'Ensure contractor has substantial capital and equipment of their own',
+      'Contractor must have genuine control over their own work performance',
+      'Fixed-term project contracts with defined deliverables',
+      'Avoid arrangements beyond 1 year; refresh contract with clear project basis',
+      'Local Philippine labor counsel review',
+    ],
+    similar:['India', 'Indonesia'],
+    peRisk:'Medium-High — BIR pursues foreign entities; ongoing activity creates PE risk',
+    criminal:'DOLE referrals for deliberate violations; BIR criminal prosecution for tax offenses',
+    enforcement:'High — NLRC is active; DOLE inspection authority; BIR enforcement improving',
+    eorRec:'Strongly recommended; PEO structure well-established in Philippines',
+    matrix:{ presumption:'high', duration:'crit', exclusivity:'med', control:'crit', integration:'high', equipment:'med', substitution:'med', peRisk:'med', criminal:'med', enforcement:'high', eorNeeded:'recommend' }
+  },
+  {
+    id:'ng', name:'Nigeria', flag:'🇳🇬', region:'africa', risk:'high', riskMod:1,
+    extra: 'LIRS Tax Enforcement Growing',
+    legalTest:'Labour Act Cap L1 LFN 2004 — Control Test',
+    testBasis:'Labour Act Cap L1 LFN 2004; Common law control test; Lagos IRS enforcement; Pension Reform Act 2014',
+    presumption:'No formal statutory presumption; courts apply common law control test; favor workers in ambiguous cases',
+    factors:[
+      'Control test: does employer control what work is done AND how it is done?',
+      'Integration: is the work integral to the normal operations of the hiring entity?',
+      'Economic dependence: contractor relies primarily on one client',
+      'Equipment/tools: who provides tools and facilities for the work?',
+      'Regularity: recurring, consistent engagement patterns',
+      'Substitution: can the contractor freely send a substitute?',
+    ],
+    npNotes:[
+      'Lagos Internal Revenue Service (LIRS) has become increasingly sophisticated in pursuing PAYE defaults',
+      'Pension Reform Act 2014: contributions mandatory for employees — contractors can be caught in audits',
+      'NSITF (National Social Insurance Trust Fund): employee levy — not applicable to genuine contractors',
+      'CERPAC (immigration): foreign nationals need Combined Expatriate Residence Permit — sponsoring company becomes deemed employer',
+      'Nigeria has significant diaspora workforce doing remote tech work — enforcement risk is growing',
+      'Non-profit registration (SCUML, CAC) requirements interact with employment compliance',
+    ],
+    penalties:[
+      'PAYE retroactively + penalties and interest (FIRS/LIRS)',
+      'Pension contributions retroactively (PenCom)',
+      'NSITF contributions',
+      'Labour Act violations: compensatory damages',
+    ],
+    mitigation:[
+      'Written IC agreement with clear deliverables and independence clauses',
+      'Document contractor\'s multiple clients and independent business',
+      'Contractor should have own CAC-registered business entity',
+      'Avoid any supervisory or control language',
+      'Local Nigerian legal counsel for ongoing arrangements',
+      'Consider EOR for any engagement exceeding 6 months',
+    ],
+    similar:['Kenya', 'Ethiopia', 'Ghana'],
+    peRisk:'Medium — FIRS (Federal Inland Revenue) increasingly asserting PE; growing international tax capability',
+    criminal:'Possible for willful PAYE/tax evasion; EFCC involvement in some cases',
+    enforcement:'Medium-High and growing — LIRS specifically is becoming more sophisticated',
+    eorRec:'Recommended for ongoing work; required for arrangements >12 months',
+    matrix:{ presumption:'low', duration:'med', exclusivity:'med', control:'med', integration:'med', equipment:'low', substitution:'low', peRisk:'med', criminal:'med', enforcement:'med', eorNeeded:'consider' }
+  },
+  {
+    id:'ke', name:'Kenya', flag:'🇰🇪', region:'africa', risk:'high', riskMod:1,
+    extra: 'KRA NGO Sector Focus',
+    legalTest:'Employment Act 2007 s.11 — Presumption of Employment',
+    testBasis:'Employment Act 2007; s.11 presumption; KRA enforcement; Employment and Labour Relations Court',
+    presumption:'YES (s.11) — weak but present: employment presumed from mutually known facts of working relationship',
+    factors:[
+      'Control: who controls the manner and method of performing the work?',
+      'Economic dependence: is contractor economically dependent on the hiring entity?',
+      'Regularity: consistent, recurring work pattern',
+      'Personal service: is work performed personally?',
+      'Integration: worker integrated into the organization\'s operations',
+      'NSSF/NHIF intersection: social security and health fund obligations for employees',
+    ],
+    npNotes:[
+      'KRA (Kenya Revenue Authority) has specifically targeted NGO sector for payroll tax compliance',
+      'NGO Coordination Act: international NGOs must register with NGO Coordination Board — affects employment structure',
+      'NSSF (National Social Security Fund) and NHIF (National Hospital Insurance Fund): employee contributions',
+      'Work permit sponsorship (Entry Permit Class G) for foreign nationals creates deemed employer relationship',
+      'Kenya is a regional hub for international NGOs — enforcement awareness is high',
+      'Employment and Labour Relations Court is accessible and active',
+    ],
+    penalties:[
+      'PAYE retroactively + penalties and interest',
+      'NSSF + NHIF contributions retroactively',
+      'Labour court awards: reinstatement or compensation',
+      'KRA administrative penalties for non-compliance',
+    ],
+    mitigation:[
+      'Local Kenyan legal counsel for any ongoing arrangement',
+      'Written IC agreements with clear project scope and deliverables',
+      'Contractor should have own business registration (limited company or business name)',
+      'Document multiple client relationships',
+      'Avoid regular monthly payments on a consistent schedule',
+      'Consider EOR for any engagement with dedicated full-time work',
+      'Ensure NGO Coordination Board registration is current',
+    ],
+    similar:['Ethiopia', 'Nigeria', 'Tanzania'],
+    peRisk:'Medium — KRA growing in sophistication; ongoing contractor activity may create PE',
+    criminal:'Administrative penalties primarily; criminal referral possible for deliberate tax evasion',
+    enforcement:'Medium-High — KRA increasingly focused on international NGOs; ELRC court accessible',
+    eorRec:'Recommended for ongoing work exceeding 6 months',
+    matrix:{ presumption:'med', duration:'med', exclusivity:'med', control:'med', integration:'med', equipment:'low', substitution:'low', peRisk:'med', criminal:'low', enforcement:'med', eorNeeded:'consider' }
+  }
+];
+
+// ═══════════════════════════════════════════════════════════════════
+// SCREENER
+// ═══════════════════════════════════════════════════════════════════
+
+const QUESTIONS = [
+  {
+    id:'country', text:'Which country is the contractor based in?', type:'select',
+    note:'Select the country where the contractor physically lives and performs the work.',
+    options: null // populated from COUNTRIES
+  },
+  {
+    id:'duration',
+    text:'How long has the engagement lasted, or how long is it expected to last?',
+    note:'Include the full planned duration, not just the current contract term.',
+    options:[
+      { label:'Less than 3 months (one-off project)', pts:0 },
+      { label:'3 to 12 months', pts:1 },
+      { label:'1 to 2 years', pts:2 },
+      { label:'More than 2 years or indefinite/ongoing', pts:3 },
+    ]
+  },
+  {
+    id:'exclusivity',
+    text:'Does the contractor work exclusively or primarily for your organization?',
+    note:'Consider their actual client portfolio, not just what the contract says.',
+    options:[
+      { label:'They actively work for multiple other clients (documented)', pts:0 },
+      { label:'They have other clients, but we are their majority income source', pts:2 },
+      { label:'We are their sole or near-sole client', pts:3 },
+    ]
+  },
+  {
+    id:'control',
+    text:'Who controls HOW the work is done — methods, schedule, and approach?',
+    note:'Focus on the substance of the relationship, not just the contract wording.',
+    options:[
+      { label:'They decide entirely — method, schedule, and approach are theirs', pts:0 },
+      { label:'We specify deliverables and outcomes; they choose their methods', pts:1 },
+      { label:'We direct specific methods and/or set their working hours/schedule', pts:3 },
+    ]
+  },
+  {
+    id:'integration',
+    text:'How integral is this work to your organization\'s core mission or operations?',
+    note:'E.g., a research scientist doing your core research = integral. An accountant doing year-end tax filing = peripheral.',
+    options:[
+      { label:'Peripheral / specialized function outside our core operations', pts:0 },
+      { label:'Related to our work but not core operations', pts:1 },
+      { label:'Core to our mission or operations — central role', pts:2 },
+    ]
+  },
+  {
+    id:'equipment',
+    text:'Who provides the primary tools, equipment, and workspace?',
+    options:[
+      { label:'Contractor provides all their own tools and equipment', pts:0 },
+      { label:'Mix — some from us, some their own', pts:1 },
+      { label:'We provide the primary equipment, software, or dedicated workspace', pts:2 },
+    ]
+  },
+  {
+    id:'schedule',
+    text:'Does the contractor work a set schedule or fixed hours?',
+    options:[
+      { label:'Purely output/deliverable-based — no schedule requirements', pts:0 },
+      { label:'Flexible, but expected to be reasonably available during business hours', pts:1 },
+      { label:'Fixed schedule or hours similar to a full-time employee', pts:2 },
+    ]
+  },
+  {
+    id:'substitution',
+    text:'Can the contractor send a qualified substitute to perform the work?',
+    note:'This must be a genuine right — not just theoretically allowed but practically never permitted.',
+    options:[
+      { label:'Yes — substitution right is genuine, exercisable, and in the contract', pts:0 },
+      { label:'Not addressed / informally discouraged', pts:1 },
+      { label:'No — personal service required; only this specific person can do the work', pts:2 },
+    ]
+  },
+  {
+    id:'benefits',
+    text:'Is the contractor receiving any employment-like benefits or perks?',
+    note:'E.g., equipment stipend, professional development budget, conference travel, health contribution, access to employee systems/events.',
+    options:[
+      { label:'No — purely invoiced services, no benefits', pts:0 },
+      { label:'Minor: reimbursements for project expenses only', pts:1 },
+      { label:'Yes — receiving benefits typical of employees (equipment, training budget, etc.)', pts:2 },
+    ]
+  }
+];
+
+// Populate country options
+QUESTIONS[0].options = COUNTRIES.map(c => ({
+  label: `${c.flag} ${c.name}`,
+  value: c.id,
+  pts: 0
+}));
+
+let currentQ = 0;
+let answers = {};
+let selectedCountry = null;
+
+function initScreener() {
+  renderQuestion(0);
+}
+
+function renderQuestion(index) {
+  const q = QUESTIONS[index];
+  const progress = Math.round(((index) / QUESTIONS.length) * 100);
+  document.getElementById('progress-fill').style.width = (progress + 11) + '%';
+  document.getElementById('progress-label').textContent = `Question ${index+1} of ${QUESTIONS.length}`;
+
+  let html = `<div class="question-card"><h3>${q.text}</h3>`;
+  if (q.note) html += `<p class="q-note">${q.note}</p>`;
+
+  if (q.type === 'select') {
+    html += `<div class="options-list">`;
+    q.options.forEach(opt => {
+      const val = opt.value || opt.label;
+      const sel = answers[q.id] === val ? 'selected' : '';
+      html += `<button class="option-btn ${sel}" onclick="selectAnswer('${q.id}','${val}',0,this)">${opt.label}</button>`;
+    });
+    html += `</div>`;
+  } else {
+    html += `<div class="options-list">`;
+    q.options.forEach((opt, i) => {
+      const sel = answers[q.id] !== undefined && answers[q.id].label === opt.label ? 'selected' : '';
+      const ptsLabel = opt.pts > 0 ? `<span class="option-pts">+${opt.pts} risk pts</span>` : `<span class="option-pts">Low risk</span>`;
+      html += `<button class="option-btn ${sel}" onclick="selectAnswer('${q.id}',${i},${opt.pts},this)">${opt.label} ${ptsLabel}</button>`;
+    });
+    html += `</div>`;
+  }
+
+  html += `<div class="screener-nav">`;
+  if (index > 0) html += `<button class="btn btn-secondary" onclick="prevQuestion()">← Back</button>`;
+  else html += `<div></div>`;
+  const nextLabel = index < QUESTIONS.length - 1 ? 'Next →' : '🔍 Show Risk Assessment';
+  const hasAnswer = answers[q.id] !== undefined;
+  html += `<button class="btn btn-primary" id="next-btn" onclick="nextQuestion()" ${hasAnswer?'':'disabled'}>${nextLabel}</button>`;
+  html += `</div></div>`;
+
+  document.getElementById('screener-questions').innerHTML = html;
+}
+
+function selectAnswer(qId, val, pts, btn) {
+  if (QUESTIONS[currentQ].type === 'select') {
+    answers[qId] = val;
+    selectedCountry = COUNTRIES.find(c => c.id === val);
+  } else {
+    answers[qId] = { val, pts };
+  }
+  document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.getElementById('next-btn').disabled = false;
+}
+
+function nextQuestion() {
+  if (currentQ < QUESTIONS.length - 1) {
+    currentQ++;
+    renderQuestion(currentQ);
+  } else {
+    showResults();
+  }
+}
+
+function prevQuestion() {
+  if (currentQ > 0) {
+    currentQ--;
+    renderQuestion(currentQ);
+  }
+}
+
+function showResults() {
+  document.getElementById('progress-fill').style.width = '100%';
+  document.getElementById('progress-label').textContent = 'Assessment Complete';
+  document.getElementById('screener-questions').style.display = 'none';
+
+  let score = 0;
+  Object.entries(answers).forEach(([k,v]) => {
+    if (k !== 'country' && v && typeof v.pts === 'number') score += v.pts;
+  });
+
+  const country = selectedCountry;
+  if (country) score += country.riskMod;
+
+  let level, label, icon, cls, desc;
+  if (score <= 5)      { level='low';  label='Low Risk';      icon='✅'; cls='low';  desc='The arrangement has low misclassification indicators. Maintain documentation and review annually.'; }
+  else if (score <= 11){ level='med';  label='Medium Risk';   icon='⚠️'; cls='med';  desc='Several risk factors are present. Legal review is recommended before continuing this arrangement.'; }
+  else if (score <= 17){ level='high'; label='High Risk';     icon='🔴'; cls='high'; desc='Significant misclassification risk. This arrangement has multiple characteristics of an employment relationship. Restructure or consult legal counsel urgently.'; }
+  else                 { level='crit'; label='Critical Risk'; icon='🚨'; cls='crit'; desc='This arrangement is highly likely to be reclassified as employment. Immediate action required.'; }
+
+  // Build flags
+  const flags = [];
+  const dur = answers.duration;
+  const exc = answers.exclusivity;
+  const ctrl = answers.control;
+  const intg = answers.integration;
+  const equip = answers.equipment;
+  const sched = answers.schedule;
+  const sub = answers.substitution;
+  const ben = answers.benefits;
+
+  if (dur && dur.pts >= 2) flags.push({ cls:'red', icon:'🕐', text:`<strong>Long duration:</strong> ${dur.pts === 3 ? 'Indefinite/2+ year' : '1–2 year'} engagements signal permanency — a primary employment indicator in most jurisdictions.` });
+  if (exc && exc.pts >= 2) flags.push({ cls:'red', icon:'🔒', text:`<strong>Exclusivity/economic dependence:</strong> Contractor ${exc.pts===3?'works solely':'primarily'} for your org — one of the strongest employment indicators globally.` });
+  if (ctrl && ctrl.pts >= 2) flags.push({ cls:'red', icon:'🎮', text:`<strong>Behavioral control:</strong> Your org controls how work is done — a core factor in every major misclassification test worldwide.` });
+  if (intg && intg.pts >= 2) flags.push({ cls:'amber', icon:'🏢', text:`<strong>Core business integration:</strong> Work that is central to the org's mission is consistently treated as employment in high-risk jurisdictions.` });
+  if (equip && equip.pts >= 2) flags.push({ cls:'amber', icon:'💻', text:`<strong>Org-provided equipment:</strong> Providing primary tools or workspace indicates an employment relationship in most tests.` });
+  if (sched && sched.pts >= 2) flags.push({ cls:'amber', icon:'📅', text:`<strong>Fixed schedule:</strong> Setting working hours is a behavioral control indicator, especially in civil law jurisdictions.` });
+  if (sub && sub.pts >= 2) flags.push({ cls:'red', icon:'🔄', text:`<strong>No right to substitute:</strong> Personal service requirement is a critical employment indicator under Australian, UK, and most civil law tests.` });
+  if (ben && ben.pts >= 2) flags.push({ cls:'amber', icon:'🎁', text:`<strong>Employee-like benefits:</strong> Benefits typical of employees (equipment, training, etc.) undermine contractor status in any jurisdiction.` });
+
+  // Country-specific flags
+  const countryFlags = [];
+  if (country) {
+    if (country.risk === 'crit') countryFlags.push({ cls:'purple', icon:'🟣', text:`<strong>${country.name} — Critical risk jurisdiction:</strong> ${country.legalTest}. Even well-structured contractor arrangements face high reclassification risk here.` });
+    if (['mx','br','de','fr','ar'].includes(country.id)) countryFlags.push({ cls:'red', icon:'🚨', text:`<strong>EOR Required:</strong> ${country.name} requires an Employer of Record for any ongoing work. Individual contractor arrangements are not legally safe for ongoing engagements.` });
+    if (country.criminal && country.criminal !== 'N/A' && country.criminal.includes('Yes')) countryFlags.push({ cls:'purple', icon:'⚖️', text:`<strong>Criminal Liability Risk (${country.name}):</strong> ${country.criminal} Officers of your organization may face personal criminal exposure.` });
+    if (country.id !== 'us') countryFlags.push({ cls:'blue', icon:'🏛', text:`<strong>US-Only Legal Entity:</strong> If reclassified in ${country.name}, you have no mechanism to legally employ this person without establishing a local entity or EOR. This significantly amplifies the risk.` });
+  }
+
+  // Mitigation
+  const mitigations = [];
+  if (exc && exc.pts >= 2) mitigations.push('Require contractor to develop and document relationships with at least 2–3 other clients');
+  if (ctrl && ctrl.pts >= 1) mitigations.push('Restructure engagement to specify deliverables/outcomes only — remove any language directing how work is done');
+  if (sub && sub.pts >= 1) mitigations.push('Add a genuine substitution clause to the contract; test it in practice');
+  if (equip && equip.pts >= 1) mitigations.push('Transition to contractor-owned equipment; remove company devices or accounts');
+  if (sched && sched.pts >= 1) mitigations.push('Remove schedule requirements; move to purely output-based milestones');
+  if (dur && dur.pts >= 2) mitigations.push('Define a clear project scope with an end date; avoid open-ended engagements');
+  if (ben && ben.pts >= 1) mitigations.push('Eliminate employee-like benefits; only reimburse documented project expenses');
+  if (country && ['mx','br','de','fr','ar','nl'].includes(country.id)) mitigations.push(`Engage an Employer of Record (EOR) in ${country.name} — this is the only compliant structure for ongoing work`);
+  else if (country && ['au','gb','in','co','et'].includes(country.id)) mitigations.push(`Obtain legal review from a ${country.name}-qualified employment lawyer before continuing this arrangement`);
+  mitigations.push('Conduct an annual review of all contractor classifications with employment counsel');
+
+  let html = `<div id="screener-results">
+    <div class="results-card">
+      <div class="results-header">
+        <div class="risk-circle ${cls}">
+          <div class="risk-icon">${icon}</div>
+          <div class="risk-score">Score: ${score}</div>
+        </div>
+        <div class="results-header-text">
+          <h2>${label}</h2>
+          <p>${country ? `${country.flag} ${country.name} · ` : ''}${desc}</p>
+        </div>
+      </div>
+      <div class="results-body">`;
+
+  if (flags.length > 0) {
+    html += `<div class="results-section"><h4>🚩 Risk Factors Identified</h4><ul class="flag-list">`;
+    flags.forEach(f => html += `<li class="flag-item ${f.cls}"><span class="flag-icon">${f.icon}</span><span>${f.text}</span></li>`);
+    html += `</ul></div>`;
+  }
+
+  if (countryFlags.length > 0) {
+    html += `<div class="results-section"><h4>🌍 Country-Specific Warnings${country ? ` — ${country.flag} ${country.name}` : ''}</h4><ul class="flag-list">`;
+    countryFlags.forEach(f => html += `<li class="flag-item ${f.cls}"><span class="flag-icon">${f.icon}</span><span>${f.text}</span></li>`);
+    if (country) {
+      html += `<li class="flag-item blue"><span class="flag-icon">📋</span><span><strong>Legal Test:</strong> ${country.legalTest}</span></li>`;
+      html += `<li class="flag-item blue"><span class="flag-icon">📌</span><span><strong>Presumption of employment:</strong> ${country.presumption}</span></li>`;
+    }
+    html += `</ul></div>`;
+  }
+
+  if (mitigations.length > 0) {
+    html += `<div class="results-section"><h4>✅ Recommended Actions</h4><ul class="flag-list">`;
+    mitigations.forEach(m => html += `<li class="mit-item"><span class="mit-icon">→</span><span>${m}</span></li>`);
+    html += `</ul></div>`;
+  }
+
+  if (country) {
+    html += `<div class="results-section"><p style="font-size:13px;color:var(--gray-500)">View the full country profile for <strong>${country.flag} ${country.name}</strong> in the <a href="#" onclick="switchTabFromResult('guide','${country.id}'); return false;">Country Guide →</a></p></div>`;
+  }
+
+  html += `</div></div>
+    <button class="btn btn-secondary restart-btn" onclick="restartScreener()">← Start Over</button>
+  </div>`;
+
+  document.getElementById('screener-results').outerHTML = html;
+}
+
+function restartScreener() {
+  currentQ = 0;
+  answers = {};
+  selectedCountry = null;
+  document.getElementById('screener-questions').style.display = 'block';
+  document.getElementById('progress-fill').style.width = '11%';
+  document.getElementById('progress-label').textContent = 'Question 1 of 9';
+  renderQuestion(0);
+  const res = document.getElementById('screener-results');
+  if (res) res.remove();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// COUNTRY GUIDE
+// ═══════════════════════════════════════════════════════════════════
+
+let activeRegion = 'all';
+let activeRisk = 'all';
+let searchQuery = '';
+
+function renderCards() {
+  const grid = document.getElementById('cards-grid');
+  const noRes = document.getElementById('no-results');
+  const filtered = COUNTRIES.filter(c => {
+    const regionMatch = activeRegion === 'all' || c.region === activeRegion;
+    const riskMatch = activeRisk === 'all' || c.risk === activeRisk;
+    const searchMatch = searchQuery === '' || c.name.toLowerCase().includes(searchQuery.toLowerCase());
+    return regionMatch && riskMatch && searchMatch;
+  });
+
+  if (filtered.length === 0) {
+    grid.innerHTML = '';
+    noRes.style.display = 'block';
+    return;
+  }
+  noRes.style.display = 'none';
+
+  const riskOrder = { crit: 0, high: 1, med: 2, low: 3 };
+  filtered.sort((a,b) => riskOrder[a.risk] - riskOrder[b.risk]);
+
+  grid.innerHTML = filtered.map(c => buildCard(c)).join('');
+}
+
+function buildCard(c) {
+  const badgeClass = `badge-${c.risk}`;
+  const riskLabels = { low:'Low Risk', med:'Medium Risk', high:'High Risk', crit:'Critical Risk' };
+  const riskLabel = riskLabels[c.risk];
+  const regionLabels = { americas:'Americas', apac:'Asia-Pacific', europe:'Europe', africa:'Africa' };
+
+  return `
+  <div class="country-card card-left-border ${c.risk}" id="card-${c.id}" data-region="${c.region}" data-risk="${c.risk}">
+    <div class="card-header" onclick="toggleCard('${c.id}')">
+      <div class="country-flag">${c.flag}</div>
+      <div class="card-header-text">
+        <h3>${c.name}</h3>
+        <div class="card-badges">
+          <span class="badge ${badgeClass}">${riskLabel}</span>
+          <span class="badge-region">${regionLabels[c.region]}</span>
+          ${c.extra ? `<span class="badge-extra">⚡ ${c.extra}</span>` : ''}
+        </div>
+        <div class="card-sub">${c.legalTest}</div>
+      </div>
+      <div class="card-toggle" id="toggle-${c.id}">▶</div>
+    </div>
+    <div class="card-body" id="body-${c.id}">
+      <div class="card-grid" style="margin-bottom:16px">
+        <div class="card-item">
+          <strong>Legal Test</strong>${c.legalTest}
+        </div>
+        <div class="card-item">
+          <strong>Enforcement Intensity</strong>${c.enforcement}
+        </div>
+        <div class="card-item">
+          <strong>PE Risk (for US entity)</strong>${c.peRisk}
+        </div>
+        <div class="card-item">
+          <strong>Criminal Liability</strong>${c.criminal}
+        </div>
+      </div>
+
+      <div class="card-section">
+        <h4>📋 Presumption & Legal Basis</h4>
+        <p style="font-size:13px;color:var(--gray-700);background:var(--gray-50);padding:10px 12px;border-radius:6px;line-height:1.6">${c.presumption}</p>
+        <p style="font-size:11px;color:var(--gray-400);margin-top:4px;font-style:italic">${c.testBasis}</p>
+      </div>
+
+      <div class="card-section">
+        <h4>🔍 Key Misclassification Factors</h4>
+        <ul class="card-list amber">${c.factors.map(f=>`<li>${f}</li>`).join('')}</ul>
+      </div>
+
+      <div class="card-section">
+        <h4>🏛 Non-Profit / US-Only Entity Considerations</h4>
+        <ul class="card-list">${c.npNotes.map(n=>`<li>${n}</li>`).join('')}</ul>
+        ${c.id !== 'us' ? `<div class="pe-note"><strong>Permanent Establishment Warning</strong><p>${c.peRisk}</p></div>` : ''}
+      </div>
+
+      <div class="card-section">
+        <h4>⚠️ Penalties for Misclassification</h4>
+        <ul class="card-list red">${c.penalties.map(p=>`<li>${p}</li>`).join('')}</ul>
+      </div>
+
+      <div class="card-section">
+        <h4>✅ Mitigation Paths</h4>
+        <ul class="card-list green">${c.mitigation.map(m=>`<li>${m}</li>`).join('')}</ul>
+        <div class="np-note"><strong>EOR Recommendation</strong><p>${c.eorRec}</p></div>
+      </div>
+
+      ${c.similar.length > 0 ? `<div class="card-section"><h4>🔗 Similar Risk Profile</h4><p style="font-size:13px;color:var(--gray-500)">Countries with similar legal frameworks: ${c.similar.join(', ')}</p></div>` : ''}
+    </div>
+  </div>`;
+}
+
+function toggleCard(id) {
+  const body = document.getElementById('body-' + id);
+  const tog = document.getElementById('toggle-' + id);
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  tog.classList.toggle('open', !isOpen);
+}
+
+function openCard(id) {
+  const body = document.getElementById('body-' + id);
+  const tog = document.getElementById('toggle-' + id);
+  if (!body.classList.contains('open')) {
+    body.classList.add('open');
+    tog.classList.add('open');
+  }
+}
+
+function filterRegion(val, btn) {
+  activeRegion = val;
+  document.querySelectorAll('#region-filters .filter-chip').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderCards();
+}
+
+function filterRisk(val, btn) {
+  activeRisk = val;
+  document.querySelectorAll('#risk-filters .filter-chip').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderCards();
+}
+
+function filterSearch(val) {
+  searchQuery = val;
+  renderCards();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// FACTOR MATRIX
+// ═══════════════════════════════════════════════════════════════════
+
+const MATRIX_COLS = [
+  { key:'presumption', label:'Employment\nPresumption' },
+  { key:'duration', label:'Duration\nWeight' },
+  { key:'exclusivity', label:'Exclusivity\nWeight' },
+  { key:'control', label:'Control\nTest' },
+  { key:'integration', label:'Integration\nTest' },
+  { key:'equipment', label:'Equipment\nWeight' },
+  { key:'substitution', label:'Substitution\nRequired' },
+  { key:'peRisk', label:'PE Risk\n(US entity)' },
+  { key:'criminal', label:'Criminal\nLiability' },
+  { key:'enforcement', label:'Enforcement\nIntensity' },
+  { key:'eorNeeded', label:'EOR\nNeeded?' },
+];
+
+const CELL_LABELS = {
+  low:'Low', med:'Medium', high:'High', crit:'Critical', na:'N/A',
+  required:'Required', recommend:'Recommend', consider:'Consider'
+};
+const CELL_CLASSES = {
+  low:'mc-low', med:'mc-med', high:'mc-high', crit:'mc-crit', na:'mc-na',
+  required:'mc-crit', recommend:'mc-high', consider:'mc-med'
+};
+
+function buildMatrix() {
+  const riskOrder = { crit:0, high:1, med:2, low:3 };
+  const sorted = [...COUNTRIES].sort((a,b) => riskOrder[a.risk] - riskOrder[b.risk]);
+
+  let html = `<thead><tr>
+    <th>Country / Jurisdiction</th>
+    ${MATRIX_COLS.map(c=>`<th>${c.label.replace('\n','<br>')}</th>`).join('')}
+  </tr></thead><tbody>`;
+
+  sorted.forEach(c => {
+    const riskLabels = { low:'Low', med:'Medium', high:'High', crit:'Critical' };
+    const riskCls = { low:'mc-low', med:'mc-med', high:'mc-high', crit:'mc-crit' };
+    html += `<tr>
+      <td>${c.flag} ${c.name} <span class="badge ${`badge-${c.risk}`}" style="margin-left:4px;font-size:10px">${riskLabels[c.risk]}</span></td>
+      ${MATRIX_COLS.map(col => {
+        const val = c.matrix[col.key];
+        const label = CELL_LABELS[val] || val;
+        const cls = CELL_CLASSES[val] || 'mc-na';
+        return `<td class="${cls}">${label}</td>`;
+      }).join('')}
+    </tr>`;
+  });
+
+  html += `</tbody>`;
+  document.getElementById('matrix-table').innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// TAB NAVIGATION
+// ═══════════════════════════════════════════════════════════════════
+
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  if (btn) btn.classList.add('active');
+  else {
+    const buttons = document.querySelectorAll('.tab-btn');
+    const map = { screener:0, guide:1, matrix:2 };
+    if (buttons[map[id]]) buttons[map[id]].classList.add('active');
+  }
+}
+
+function switchTabFromResult(tabId, countryId) {
+  switchTab(tabId, null);
+  setTimeout(() => {
+    const el = document.getElementById('card-' + countryId);
+    if (el) {
+      el.scrollIntoView({ behavior:'smooth', block:'start' });
+      openCard(countryId);
+    }
+  }, 100);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  initScreener();
+  renderCards();
+  buildMatrix();
+});
+</script>
+</body>
+</html>
